@@ -1,10 +1,11 @@
-import { useContext, useState } from 'react'
-import { rc } from '../context/RecipeContext';
+// ==================== CategoryCards.jsx ====================
+import { useContext, useState } from "react";
+import { rc } from "../context/RecipeContext";
 
 const CategoryCards = () => {
-  const { setData, allData } = useContext(rc);
+  const { updateFilter, filters, resetFilter } = useContext(rc);
 
-  const [card, setCard] = useState([
+  const [cards] = useState([
     {
       image:
         "https://images.unsplash.com/photo-1560788843-f7bee7cfe087?auto=format&fit=crop&q=60&w=600",
@@ -39,29 +40,50 @@ const CategoryCards = () => {
       title: "Beverage",
     },
   ]);
-  
+
   const catHandler = (category) => {
-    setData(allData.filter((item) => item.mealType?.includes(category)));
+    // If clicking the same category, toggle it off
+    if (filters.category === category) {
+      resetFilter("category");
+    } else {
+      updateFilter("category", category);
+    }
   };
 
-
   return (
-      <div className="mx-5 my-10 flex items-center justify-evenly">
-        {card.map((item, index) => (
-          <div onClick={() => catHandler(item.title)} key={index} className="text-center">
-            <div className="w-[6em] h-[5em] overflow-hidden rounded-2xl border border-amber-600/70">
-              <img
-                className="w-full h-full object-cover rounded-2xl hover:scale-125 transition-transform duration-500"
-                src={item.image}
-                alt={item.title}
-              />
-            </div>
-
-            <h5>{item.title}</h5>
+    <div className="mx-5 my-10 flex items-center justify-evenly flex-wrap gap-4">
+      {cards.map((item, index) => (
+        <div
+          onClick={() => catHandler(item.title)}
+          key={index}
+          className="text-center cursor-pointer group"
+        >
+          <div
+            className={`w-[6em] h-[5em] overflow-hidden rounded-2xl border-2 transition-all ${
+              filters.category === item.title
+                ? "border-amber-600 shadow-lg shadow-amber-600/50 scale-110"
+                : "border-amber-600/40 hover:border-amber-600"
+            }`}
+          >
+            <img
+              className="w-full h-full object-cover rounded-2xl group-hover:scale-125 transition-transform duration-500"
+              src={item.image}
+              alt={item.title}
+            />
           </div>
-        ))}
-      </div>
+          <h5
+            className={`mt-2 font-medium transition-colors ${
+              filters.category === item.title
+                ? "text-amber-700 font-bold"
+                : "text-gray-700"
+            }`}
+          >
+            {item.title}
+          </h5>
+        </div>
+      ))}
+    </div>
   );
-}
+};
 
-export default CategoryCards
+export default CategoryCards;

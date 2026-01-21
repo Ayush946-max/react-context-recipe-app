@@ -10,29 +10,13 @@ const RecipeDetails = () => {
   const comingFrom = location.state?.from;
   const { id } = useParams();
 
-  const { data, setData, favorite, setFavorite, allData } = useContext(rc);
+  const { data, setData, favorite, setFavorite, allData, setAllData } = useContext(rc);
   const recipe = data.find((r) => r?.id == Number(id));
   const isFavorite = favorite.some((f) => f.id === Number(id));
 
-
-  const {
-    name,
-    image,
-    mealType,
-    ingredients,
-    difficulty,
-    servings,
-    cuisine,
-    cookTimeMinutes,
-    instructions,
-    prepTimeMinutes,
-    caloriesPerServing,
-    rating,
-  } = recipe || {};
-
-  const [steps, setSteps] = useState(instructions || []);
+  const [steps, setSteps] = useState(recipe?.instructions || []);
   const [isOpen, setIsOpen] = useState(false);
-  const [selected, setSelected] = useState(mealType || "Breakfast");
+  const [selected, setSelected] = useState(recipe?.mealType || "Breakfast");
   const [showForm, setShowForm] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
 
@@ -45,7 +29,6 @@ const RecipeDetails = () => {
     "Desserts",
     "Drinks",
   ];
-
 
   const favHandler = () => {
     if (!isFavorite) {
@@ -62,18 +45,19 @@ const RecipeDetails = () => {
     toast.error("Remove from Favorites 🙂");
     localStorage.setItem("fav", JSON.stringify(filteredFav));
     if (comingFrom === "favorite") navigate("/fav");
-  };  
+  };
 
   const deleteHandler = () => {
     if (!window.confirm("Are you sure you want to delete this recipe?")) return;
 
-    const filtered = allData.filter((r) => r.id !== Number(id));
-    setData(filtered);
+    const filtered = allData.filter((r) => String(r.id) !== String(id));
+
+    setData(filtered); 
+    setAllData(filtered);
     localStorage.setItem("recipes", JSON.stringify(filtered));
     toast.error("Recipe Deleted!");
     navigate("/recipe");
   };
-
 
   if (!recipe)
     return (
@@ -88,17 +72,19 @@ const RecipeDetails = () => {
       <div className="bg-orange-200/90 backdrop-blur-lg rounded-3xl p-5 md:p-6 shadow-lg flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="space-y-3 text-center md:text-left">
           <h1 className="text-3xl md:text-4xl font-bold uppercase text-gray-800">
-            {name}
+            {recipe?.name}
           </h1>
 
           <div className="flex flex-wrap gap-2 justify-center md:justify-start">
             {[
-              cuisine,
-              Array.isArray(mealType) ? mealType.join(", ") : mealType,
+              recipe?.cuisine,
+              Array.isArray(recipe?.mealType)
+                ? recipe?.mealType.join(", ")
+                : recipe?.mealType,
             ].map((tag, i) => (
               <span
                 key={i}
-                className="px-4 py-1 text-sm border border-gray-300 rounded-xl text-white bg-orange-500/80"
+                className="px-4 py-1 text-md border border-gray-300 rounded-xl text-white font-medium bg-orange-600/80"
               >
                 {tag}
               </span>
@@ -106,9 +92,13 @@ const RecipeDetails = () => {
           </div>
         </div>
 
-        {image && (
+        {recipe?.image && (
           <div className="w-24 h-24 md:w-28 md:h-28 rounded-full overflow-hidden shadow-md">
-            <img src={image} alt="" className="w-full h-full object-cover" />
+            <img
+              src={recipe?.image}
+              alt=""
+              className="w-full h-full object-cover"
+            />
           </div>
         )}
       </div>
@@ -142,7 +132,7 @@ const RecipeDetails = () => {
         <div className="border rounded-2xl p-4 bg-white/60 backdrop-blur-md shadow-sm">
           <p className="font-bold text-center mb-3">Ingredients</p>
           <ul className="space-y-1 text-sm text-gray-700">
-            {ingredients.map((ing, idx) => (
+            {recipe?.ingredients.map((ing, idx) => (
               <li key={idx} className="list-disc list-inside">
                 {ing}
               </li>
@@ -159,33 +149,35 @@ const RecipeDetails = () => {
           <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm text-gray-700">
             <div className="flex justify-between">
               <span className="text-gray-500">Prep Time</span>
-              <span className="font-medium">{prepTimeMinutes} min</span>
+              <span className="font-medium">{recipe?.prepTimeMinutes} min</span>
             </div>
 
             <div className="flex justify-between">
               <span className="text-gray-500">Cook Time</span>
-              <span className="font-medium">{cookTimeMinutes} min</span>
+              <span className="font-medium">{recipe?.cookTimeMinutes} min</span>
             </div>
 
             <div className="flex justify-between">
               <span className="text-gray-500">Servings</span>
-              <span className="font-medium">{servings}</span>
+              <span className="font-medium">{recipe?.servings}</span>
             </div>
 
             <div className="flex justify-between">
               <span className="text-gray-500">Difficulty</span>
-              <span className="font-medium">{difficulty}</span>
+              <span className="font-medium">{recipe?.difficulty}</span>
             </div>
 
             <div className="flex justify-between">
               <span className="text-gray-500">Calories</span>
-              <span className="font-medium">{caloriesPerServing} kcal</span>
+              <span className="font-medium">
+                {recipe?.caloriesPerServing} kcal
+              </span>
             </div>
 
             <div className="flex justify-between">
               <span className="text-gray-500">Rating</span>
               <span className="font-medium flex items-center gap-1">
-                ⭐ {rating}
+                ⭐ {recipe?.rating}
               </span>
             </div>
           </div>
@@ -198,7 +190,7 @@ const RecipeDetails = () => {
           Instructions
         </p>
 
-        {instructions.map((ins, idx) => (
+        {recipe?.instructions.map((ins, idx) => (
           <div
             key={idx}
             className={`flex flex-col md:flex-row rounded-xl ${
@@ -233,25 +225,19 @@ const RecipeDetails = () => {
       {/* Update Modal */}
       {(showForm || isClosing) && (
         <UpdateForm
+          id={id}
           isClosing={isClosing}
           setIsClosing={setIsClosing}
-          image={image}
-          name={name}
-          time={cookTimeMinutes}
           steps={steps}
           setSteps={setSteps}
-          selected={selected}
           isOpen={isOpen}
           setIsOpen={setIsOpen}
           setShowForm={setShowForm}
           data={data}
+          allData={allData}
           setData={setData}
-          id={id}
-          ingredients={ingredients}
-          mealType={mealType}
-          difficulty={difficulty}
-          servings={servings}
-          cuisine={cuisine}
+          selected={selected}
+          recipe={recipe}
         />
       )}
     </div>

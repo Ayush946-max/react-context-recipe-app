@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { rc } from "../context/RecipeContext";
 
-const RecipeCard = ({ recipesToShow }) => {
+const RecipeCard = ({ recipesToShow, isLoading }) => {
   const navigate = useNavigate();
   const { favorite, setFavorite } = useContext(rc);
 
@@ -36,13 +36,26 @@ const RecipeCard = ({ recipesToShow }) => {
     localStorage.setItem("fav", JSON.stringify(filterFav));
     toast.error("Remove from Favorites 🙂");
   };
+  
 
   return (
     <div className="flex flex-wrap justify-center gap-6 p-6">
-      {recipesToShow.length === 0 ? (
-        <p className="text-gray-600 text-lg">Loading...</p>
+      {/* Step 1: Check if loading first */}
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center min-h-[40vh]">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-700 mb-4"></div>
+          <p className="text-amber-800 font-semibold animate-pulse">
+            Loading Delicious Recipes...
+          </p>
+        </div>
+      ) : recipesToShow?.length === 0 ? (
+        /* Step 2: Only show "Not Found" if loading is false AND array is empty */
+        <div className="text-center mt-20">
+          <p className="text-gray-400 text-5xl mb-4">🔍</p>
+          <p className="text-gray-600 text-lg font-medium">Recipe not Found</p>
+        </div>
       ) : (
-        recipesToShow.map((recipe) => (
+        recipesToShow?.map((recipe) => (
           <div
             key={recipe.id}
             className="w-65 min-h-90 bg-amber-100 border border-amber-700/40 rounded-2xl shadow-md hover:shadow-xl transition-all"

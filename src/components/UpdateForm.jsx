@@ -1,40 +1,57 @@
-import { useForm } from "react-hook-form";
+import { useState } from "react";
+import { useForm, useFieldArray } from "react-hook-form";
 import { toast } from "react-toastify";
 
 const UpdateForm = (props) => {
+  const [imgLoaded, setImgLoaded] = useState(false);
   const {
+    id,
     isClosing,
     setIsClosing,
-    image,
-    name,
-    time,
-    steps,
-    selected,
-    isOpen,
     setShowForm,
-    data,
-    id,
-    setData,
-    setIsOpen,
-    setSteps,
-    ingredients,
-    mealType,
     allData,
-    setSelected,
-    setImage,
+    setData,
+    // Original data passed as props for initial values
+    recipe,
   } = props;
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    control,
+    formState: { errors, isSubmitting, dirtyFields },
   } = useForm({
+    mode: "onTouched",
     defaultValues: {
-      image: image,
-      name: name,
-      time: time,
-      ingredients: ingredients,
+      name: recipe?.name,
+      image: recipe?.image,
+      prepTimeMinutes: recipe?.prepTimeMinutes,
+      cookTimeMinutes: recipe?.cookTimeMinutes,
+      servings: recipe?.servings,
+      difficulty: recipe?.difficulty,
+      cuisine: recipe?.cuisine,
+      ingredients: recipe?.ingredients, // Array of strings
+      instructions: recipe?.instructions, // Array of strings
     },
+  });
+
+  // Dynamic field handlers for Ingredients and Instructions
+  const {
+    fields: ingFields,
+    append: appendIng,
+    remove: removeIng,
+  } = useFieldArray({
+    control,
+    name: "ingredients",
+  });
+
+  const {
+    fields: insFields,
+    append: appendIns,
+    remove: removeIns,
+  } = useFieldArray({
+    control,
+    name: "instructions",
   });
 
   const handleClose = () => {
@@ -45,20 +62,31 @@ const UpdateForm = (props) => {
     }, 300);
   };
 
-  const handleStepChange = (index, field, value) => {
-    const updatedSteps = [...steps];
-    updatedSteps[index][field] = value;
-    setSteps(updatedSteps);
-  };
+  const updateHandle = async (updatedFields) => {
+    // Check if any changes were made
+    // const isChanged = Object.keys(dirtyFields).length > 0;
 
-  const updateHandle = async (updatedRecipe) => {
-    updatedRecipe.category = selected;
-    updatedRecipe.description = steps;
-    updatedRecipe.image = image;
+    // if (!isChanged) {
+    //   toast.error("No changes made to update!");
+    //   return;
+    // }
 
-    const index = allData.findIndex((r) => r.id === id);
+    // Ensure numeric fields are actually numbers
+    const formattedData = {
+      ...updatedFields,
+      prepTimeMinutes: Number(updatedFields.prepTimeMinutes),
+      cookTimeMinutes: Number(updatedFields.cookTimeMinutes),
+      servings: Number(updatedFields.servings),
+    };
+
+    const index = allData?.findIndex((r) => r.id === Number(id));
     const newData = [...allData];
-    newData[index] = { ...newData[index], ...updatedRecipe };
+
+    // Merge existing metadata (like rating/userId) with updated fields
+    newData[index] = { ...newData[index], ...formattedData };
+
+    await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate async operation
+
     setData(newData);
     localStorage.setItem("recipes", JSON.stringify(newData));
 
@@ -66,137 +94,160 @@ const UpdateForm = (props) => {
     handleClose();
   };
 
-  const addStep = () => {
-    setSteps([
-      ...steps,
-      { id: steps.length + 1, stepImageUrl: "", stepTitle: "", stepText: "" },
-    ]);
-  };
-
   return (
     <div
-      className={`fixed inset-0 flex items-center justify-center backdrop-blur-sm z-50 ${
+      className={`fixed inset-0 flex items-center justify-center backdrop-blur-md z-50 p-4 ${
         isClosing ? "animate-fadeOut" : "animate-fadeIn"
       }`}
     >
-      <div className="relative bg-white/90 rounded-3xl p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-lg">
+      {recipe?.image && (
+        <img
+          src={recipe?.image}
+          onLoad={() => setImgLoaded(true)}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${
+            imgLoaded && !isClosing ? "opacity-100" : "opacity-0"
+          } ${isClosing ? "animate-fadeOut" : ""}`}
+          alt=""
+        />
+      )}
+      <div className="absolute inset-0 backdrop-blur-md bg-amber-100/10" />
+
+      <div className="relative bg-white rounded-3xl p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-amber-100">
         <button
           onClick={handleClose}
-          className="absolute top-4 right-4 text-red-600 text-2xl font-bold"
+          className="absolute top-6 right-6 text-gray-400 hover:text-red-500 text-2xl transition-colors"
         >
           ✕
         </button>
-        <h1 className="text-3xl font-bold text-center text-amber-700 mb-6">
-          Update Recipe 🍳
-        </h1>
-        <form
-          name="UpdateForm"
-          onSubmit={handleSubmit(updateHandle)}
-          className="flex flex-col gap-4"
-        >
-          {/* Image URL */}
-          <input
-            {...register("image", {
-              required: "URL is required",
-              pattern: {
-                value: /^https?:\/\/[^\s$.?#].[^\s]*$/,
-                message: "Enter valid URL",
-              },
-            })}
-            value={image}
-            onChange={(e) => setImage(e.target.value)}
-            className="p-3 border border-gray-300 rounded-xl w-full"
-            placeholder="Recipe Image URL"
-          />
-          {errors.imageUrl && (
-            <small className="text-red-600">{errors.imageUrl.message}</small>
-          )}
 
-          {/* Title */}
-          <input
-            {...register("name", { required: true, minLength: 3 })}
-            className="p-3 border border-gray-300 rounded-xl w-full"
-            placeholder="Recipe Title"
-          />
-          {errors.name && <small className="text-red-600">Min length 3</small>}
-          {/* Steps */}
-          <div className="flex flex-col gap-4 p-4 border border-gray-300 rounded-2xl">
-            <h2 className="font-bold text-amber-700">Steps 🧾</h2>
-            {steps.map((step, idx) => (
-              <div
-                key={idx}
-                className="flex flex-col gap-2 p-3 border border-gray-200 rounded-xl"
-              >
-                <textarea
-                  value={step.stepText}
-                  onChange={(e) =>
-                    handleStepChange(idx, "stepText", e.target.value)
-                  }
-                  placeholder="Step Description..."
-                  className="p-2 border border-gray-300 rounded-xl min-h-24"
+        <h1 className="text-3xl font-bold text-amber-800 mb-6 text-center">
+          Update Recipe 🍕
+        </h1>
+
+        <form onSubmit={handleSubmit(updateHandle)} className="space-y-6">
+          {/* Main Info */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-bold text-amber-700 ml-2">
+                Recipe Name
+              </label>
+              <input
+                {...register("name", { required: true })}
+                className="w-full p-3 border rounded-xl"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-amber-700 ml-2">
+                Image URL
+              </label>
+              <input
+                {...register("image")}
+                className="w-full p-3 border rounded-xl"
+              />
+            </div>
+          </div>
+
+          {/* Stats Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <input
+              type="number"
+              {...register("prepTimeMinutes")}
+              placeholder="Prep Min"
+              className="p-3 border rounded-xl"
+              onWheel={(e) => e.target.blur()}
+            />
+            <input
+              type="number"
+              {...register("cookTimeMinutes")}
+              placeholder="Cook Min"
+              className="p-3 border rounded-xl"
+              onWheel={(e) => e.target.blur()}
+            />
+            <input
+              type="number"
+              {...register("servings")}
+              placeholder="Servings"
+              className="p-3 border rounded-xl"
+              onWheel={(e) => e.target.blur()}
+            />
+            <select
+              {...register("difficulty")}
+              className="p-3 border rounded-xl"
+            >
+              <option value="Easy">Easy</option>
+              <option value="Medium">Medium</option>
+              <option value="Hard">Hard</option>
+            </select>
+          </div>
+
+          {/* Ingredients Section */}
+          <div className="p-4 bg-amber-50 rounded-2xl">
+            <h2 className="font-bold text-amber-800 mb-2">Ingredients</h2>
+            {ingFields.map((field, index) => (
+              <div key={field.id} className="flex gap-2 mb-2">
+                <input
+                  {...register(`ingredients.${index}`)}
+                  className="flex-1 p-2 border rounded-lg"
                 />
+                <button
+                  type="button"
+                  onClick={() => removeIng(index)}
+                  className="text-red-400 px-2"
+                >
+                  ✕
+                </button>
               </div>
             ))}
             <button
               type="button"
-              onClick={addStep}
-              className="self-center mt-2 px-4 py-2 rounded-full bg-amber-700 text-white hover:bg-amber-800 transition"
+              onClick={() => appendIng("")}
+              className="text-sm font-bold text-amber-600"
+            >
+              + Add Ingredient
+            </button>
+          </div>
+
+          {/* Instructions Section */}
+          <div className="p-4 bg-orange-50 rounded-2xl">
+            <h2 className="font-bold text-orange-800 mb-2">Instructions</h2>
+            {insFields.map((field, index) => (
+              <div key={field.id} className="flex gap-2 mb-2">
+                <textarea
+                  {...register(`instructions.${index}`)}
+                  className="flex-1 p-2 border rounded-lg h-20"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeIns(index)}
+                  className="text-red-400 px-2"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => appendIns("")}
+              className="text-sm font-bold text-orange-600"
             >
               + Add Step
             </button>
           </div>
 
-          {/* Category */}
-          <div className="relative mt-4">
-            <button
-              type="button"
-              onClick={() => setIsOpen(!isOpen)}
-              className="w-full p-3 border border-gray-300 rounded-xl flex justify-between"
-            >
-              {selected} <span>{isOpen ? "∧" : "∨"}</span>
-            </button>
-            {isOpen && (
-              <ul className="absolute z-10 w-full bg-white border rounded-xl shadow-md mt-1">
-                {mealType.map((opt) => (
-                  <li
-                    key={opt}
-                    onClick={() => {
-                      setSelected(opt);
-                      setIsOpen(false);
-                    }}
-                    className="p-2 hover:bg-amber-100 cursor-pointer"
-                  >
-                    {opt}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-          {/* Time */}
-          <div className="mt-4 flex flex-wrap gap-4">
-            {["5 min", "15 min", "25 min", "45 min", "1 hour+"].map((t) => (
-              <label key={t} className="flex items-center gap-2">
-                <input
-                  {...register("time")}
-                  type="radio"
-                  value={t}
-                  className="accent-amber-700"
-                />
-                <span>{t}</span>
-              </label>
-            ))}
-          </div>
-
-          {/* Submit */}
           <button
             type="submit"
-            disabled={isSubmitting}
-            className={`px-6 py-2 mt-4 rounded-2xl text-white bg-green-600 hover:bg-green-700 transition ${
-              isSubmitting ? "opacity-50 cursor-not-allowed" : ""
-            }`}
+            disabled={isSubmitting || Object.keys(dirtyFields).length === 0}
+            className={`w-full py-3 font-bold rounded-2xl transition-all 
+            ${Object.keys(dirtyFields).length === 0 ? "bg-gray-300 cursor-not-allowed" : "bg-green-600 hover:bg-green-700 text-white"}`}
           >
-            {isSubmitting ? "Updating..." : "Update"}
+            {isSubmitting ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Updating...
+              </>
+            ) : (
+              "Save Changes"
+            )}
           </button>
         </form>
       </div>
