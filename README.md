@@ -1,12 +1,69 @@
-# React + Vite
+# 🍽️ React Context Recipe App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern **Recipe Management Web App** built using **React + Context API**, featuring recipe browsing, searching, filtering by categories, favorites, and detailed recipe views.
 
-Currently, two official plugins are available:
+🔗 Live Data powered by DummyJSON API  
+🎨 Clean UI with smooth UX  
+⚡ Optimized state management using Context API
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## Expanding the ESLint configuration
+## 🚀 Features
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- 🔍 **Search Recipes** with suggestions
+- 🗂️ **Filter by Categories** (Breakfast, Lunch, Dinner, etc.)
+- 📄 **Recipe Details Page** with metadata
+- ❤️ **Add to Favorites**
+- ➕ **Create / Update Recipes**
+- 🔄 **Global State Management** using Context API
+- ⬆️ **Scroll to Top on Route Change**
+- 📱 Fully **Responsive UI**
+
+---
+
+## 🛠️ Tech Stack
+
+- **Frontend:** React.js (Vite)
+- **State Management:** Context API
+- **Routing:** React Router DOM
+- **Styling:** Tailwind CSS
+- **API:** DummyJSON
+- **Version Control:** Git & GitHub
+
+---
+
+## 📂 Project Structure
+
+src/
+├── components/
+│ ├── CategoryCards.jsx
+│ ├── HeroSlider.jsx
+│ ├── RecipeCard.jsx
+│ ├── RecipeDetails.jsx
+│ ├── ScrollToTop.jsx
+│ ├── SearchBar.jsx
+│ └── UpdateForm.jsx
+│
+├── context/
+│ └── RecipeContext.jsx
+│
+├── pages/
+│ ├── Home.jsx
+│ ├── Recipe.jsx
+│ ├── CreateRecipe.jsx
+│ ├── Fav.jsx
+│ └── Nav.jsx
+│
+├── routes/
+│ └── AppRoutes.jsx
+│
+└── App.jsx
+
+
+
+👨‍💻 Author
+
+Aayush Panchal
+Frontend Developer | React Enthusiast
+
+GitHub: @Ayush946-max
