@@ -1,4 +1,3 @@
-// ==================== SearchBar.jsx ====================
 import { useContext, useEffect, useState } from "react";
 import { rc } from "../context/RecipeContext";
 

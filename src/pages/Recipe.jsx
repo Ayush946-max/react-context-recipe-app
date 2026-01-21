@@ -9,44 +9,62 @@ const Recipe = () => {
   const { data, setData, setAllData, selectedRecipe, allData } = useContext(rc);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    // Simulate data fetching or wait for Context to load
-    if (allData.length > 0) {
-      setIsLoading(false);
-    } else {
-      // If data takes time to fetch from an API or LocalStorage
-      const timer = setTimeout(() => setIsLoading(false), 1000);
-      return () => clearTimeout(timer);
+  const saveWithTTL = (key, data, ttlMs) => {
+    const now = Date.now();
+
+    const item = {
+      data,
+      expiry: now + ttlMs,
+    };
+
+    localStorage.setItem(key, JSON.stringify(item));
+  };
+
+  const getWithTTL = (key) => {
+    const itemStr = localStorage.getItem(key);
+    if (!itemStr) return null;
+
+    const item = JSON.parse(itemStr);
+
+    if (Date.now() > item.expiry) {
+      localStorage.removeItem(key); // expired
+      return null;
     }
-  }, [allData]);
 
-  // const fetchRecipes = async () => {
-  //   try {
-  //     const res = await fetch("https://dummyjson.com/recipes");
-  //     const response = await res.json();
+    return item.data;
+  };
+  
+  const fetchRecipes = async () => {
+    try {
+      const res = await fetch("https://dummyjson.com/recipes");
+      const response = await res.json();
 
-  //     // Only set data if it doesn't exist yet
-  //     setData(response?.recipes || []);
-  //     setAllData(response?.recipes || []);
-  //     setIsLoading(false); // Stop loading after fetch
-  //   } catch (error) {
-  //     console.error(error);
-  //     setIsLoading(false);
-  //   }
-  // };
+      const recipes = response?.recipes || [];      
+
+      setData(recipes);
+      setAllData(recipes);
+
+      // cache for 24 hours
+      saveWithTTL("recipes", recipes, 24 * 60 * 60 * 1000);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // Check if we already have data (from localStorage via Context)
-    const localSaved = localStorage.getItem("recipes");
+    const cachedRecipes = getWithTTL("recipes");
 
-    if (allData.length > 0 || localSaved) {
-      // If data exists in context or storage, don't fetch API
+    if (cachedRecipes?.length) {
+      setData(cachedRecipes);
+      setAllData(cachedRecipes);
       setIsLoading(false);
-    } else {
-      // Only fetch if the app is totally empty
-      fetchRecipes();
+      return;
     }
-  }, [allData]); // Watch allData
+
+    fetchRecipes(); // fallback to API
+  }, []);
 
   const recipesToShow = selectedRecipe.length > 0 ? selectedRecipe : data;
 

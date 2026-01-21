@@ -1,4 +1,3 @@
-// ==================== RecipeContext.jsx ====================
 import { createContext, useEffect, useState, useMemo } from "react";
 
 export const rc = createContext(null);
@@ -31,12 +30,13 @@ const RecipeContext = (props) => {
 
   // Load recipes from localStorage on mount
   useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem("recipes"));
-    if (stored) {
-      setAllData(stored);
-      setData(stored);
-    }
+    const stored = JSON.parse(localStorage.getItem("recipes")) || {};
+    const { data = [] } = stored;
+
+    setAllData(data);
+    setData(data);
   }, []);
+
 
   // 🔥 APPLY FILTERS - This runs whenever filters or allData changes
   useEffect(() => {

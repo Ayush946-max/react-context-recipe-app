@@ -1,4 +1,3 @@
-// ==================== CategoryCards.jsx ====================
 import { useContext, useState } from "react";
 import { rc } from "../context/RecipeContext";
 
